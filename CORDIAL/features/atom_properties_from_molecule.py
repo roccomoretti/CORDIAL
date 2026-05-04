@@ -7,7 +7,7 @@ from scipy.linalg import solve
 from scipy.spatial.distance import cdist
 
 # Project imports
-from modules.features.atom_data import pauling_electronegativity, polarizabilities, hardness, hybridization
+from CORDIAL.features.atom_data import pauling_electronegativity, polarizabilities, hardness, hybridization
 
 """
 atom_properties_from_molecule.py

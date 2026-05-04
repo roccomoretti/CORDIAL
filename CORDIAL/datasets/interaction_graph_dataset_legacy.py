@@ -17,8 +17,8 @@ import time
 from typing import Optional
 
 # Project imports
-from modules.representations.interaction_graph_builder import InteractionGraphBuilder
-from modules.representations.interaction_graph_property_distance_featurizer_gpu import InteractionGraphPropertyDistanceFeaturizerGPU
+from CORDIAL.representations.interaction_graph_builder import InteractionGraphBuilder
+from CORDIAL.representations.interaction_graph_property_distance_featurizer_gpu import InteractionGraphPropertyDistanceFeaturizerGPU
 from utils.generic_molecule_loader import load_molecule
 from utils import normalization_utils
 
@@ -904,7 +904,7 @@ class InteractionGraphDatasetLegacy(Dataset):
         Returns:
             Batched feature tensor
         """
-        from modules.features.compute_properties import unified_compute_atomic_properties
+        from CORDIAL.features.compute_properties import unified_compute_atomic_properties
         
         batch_features = []
         

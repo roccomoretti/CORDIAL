@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from modules.architectures.mlp import MLP
-from modules.architectures.cordial import CORDIAL
+from CORDIAL.architectures.mlp import MLP
+from CORDIAL.architectures.cordial import CORDIAL
 
 class ModelFactory:
     """Factory for creating machine learning models by alias."""

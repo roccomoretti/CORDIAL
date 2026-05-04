@@ -10,8 +10,8 @@ import torch
 import torch.nn as nn
 
 # Project imports
-from modules.architectures.mlp import MLP
-from modules.architectures.axial_attention_with_norm import AxialAttentionWithNorm
+from CORDIAL.architectures.mlp import MLP
+from CORDIAL.architectures.axial_attention_with_norm import AxialAttentionWithNorm
 
 # Type aliases for clarity
 Tensor = torch.Tensor

@@ -2,9 +2,9 @@
 
 import numpy as np
 from rdkit import Chem
-from modules.features.atom_data import pauling_electronegativity, polarizabilities, hardness
+from CORDIAL.features.atom_data import pauling_electronegativity, polarizabilities, hardness
 
-from modules.features.atom_properties_from_molecule import (
+from CORDIAL.features.atom_properties_from_molecule import (
     atomic_number,
     atomic_mass,
     hybridization_state,
@@ -30,7 +30,7 @@ from modules.features.atom_properties_from_molecule import (
     is_in_aromatic_ring_ternary
 )
 
-from modules.features.atom_properties_from_molecules import (
+from CORDIAL.features.atom_properties_from_molecules import (
     eem_charges_with_external
 )
 

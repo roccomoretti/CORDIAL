@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import torch.nn as nn
-from modules.architectures.sinusoidal_positional_encoding import SinusoidalPositionalEncoding
+from CORDIAL.architectures.sinusoidal_positional_encoding import SinusoidalPositionalEncoding
 
 class AxialAttentionWithNorm(nn.Module):
     """

@@ -8,9 +8,9 @@ from typing import Union
 from torch.nn import Module
 
 # Project imports
-from modules.architectures.model_factory import ModelFactory
-# from modules.datasets.generic_dataset import GenericDataset
-from modules.datasets.interaction_graph_dataset_legacy import InteractionGraphDatasetLegacy
+from CORDIAL.architectures.model_factory import ModelFactory
+# from CORDIAL.datasets.generic_dataset import GenericDataset
+from CORDIAL.datasets.interaction_graph_dataset_legacy import InteractionGraphDatasetLegacy
 
 class ModelInitializer:
     """Initialize machine learning models with dataset-specific parameters."""

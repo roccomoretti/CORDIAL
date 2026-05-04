@@ -7,8 +7,8 @@ from collections import OrderedDict
 from torch.utils.data.distributed import DistributedSampler
 
 # Project imports
-from modules.datasets.data_loader_factory import DataLoaderFactory
-from modules.datasets.interaction_graph_dataset_legacy import InteractionGraphDatasetLegacy
+from CORDIAL.datasets.data_loader_factory import DataLoaderFactory
+from CORDIAL.datasets.interaction_graph_dataset_legacy import InteractionGraphDatasetLegacy
 
 class DatasetHandler:
     def __init__(self,

@@ -9,7 +9,7 @@ and histogram accumulation operations on GPU.
 
 import torch
 import time
-from modules.features.compute_properties import unified_compute_atomic_properties
+from CORDIAL.features.compute_properties import unified_compute_atomic_properties
 
 class InteractionGraphPropertyDistanceFeaturizerGPU:
     """GPU-accelerated featurizer for molecular interaction graphs."""

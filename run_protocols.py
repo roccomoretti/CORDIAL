@@ -17,9 +17,9 @@ import torch
 import torch.nn as nn
 
 # Project imports
-from modules.architectures.model_initializer import ModelInitializer
-from modules.datasets.dataset_handler import DatasetHandler
-from modules.processes.inference import Inference
+from CORDIAL.architectures.model_initializer import ModelInitializer
+from CORDIAL.datasets.dataset_handler import DatasetHandler
+from CORDIAL.processes.inference import Inference
 from utils.arg_parser_utils import MasterArgumentParser
 from utils.logger_utils import log_memory_usage
 
@@ -103,7 +103,7 @@ def create_dataset(args, device, world_size=None, rank=None):
 
     # Distributed setup
     if world_size is not None:
-        if world_size > 1 and args.sampler_type == "none":          
+        if world_size > 1 and args.sampler_type == "none":
             sampler_type = "distributed_sampler"
         else:
             sampler_type = "none"
@@ -234,7 +234,7 @@ def run_inference(model, inference_loader, device, parity=None, model_type='mlp'
     """
     # Inference
     inference_instance = Inference(model=model, dataset_loader=inference_loader, device=device,
-                                 parity=parity, model_type=model_type, 
+                                 parity=parity, model_type=model_type,
                                  sample_indices=sample_indices)
     inference_instance.run_inference()
     return inference_instance
