@@ -11,6 +11,8 @@ Date: 05/06/2024
 # General imports
 import numpy as np
 import datetime
+import os.path
+import importlib.resources
 
 # PyTorch imports
 import torch
@@ -83,7 +85,19 @@ def init():
 
     # Inference-only pipeline requires a model to be loaded from file
     if args.inference:
+        if args.load_model is None:
+            model_path = os.path.join( importlib.resources.path("CORDIAL","resources"), "weights/full.cordial.v2b.conv1d-k7c4-k3c1-nomix.attn-row_ah2-col_ah1-ff4-2x.mlp-256-256-mishx2.1-9-1.bcel-lte.model")
+            if os.path.exists(model_path):
+                args.load_model = model_path
+                print(f"Option --load_model not set: Defaulting to installed model {args.load_model}")
         assert args.load_model is not None, "Must specify which model to load from file!"
+
+    # Installation convienience
+    if args.load_normalization_data_pkl is None:
+        norm_path = os.path.join( importlib.resources.path("CORDIAL","resources"), "normalization/full.train.norm.pkl")
+        if os.path.exists(norm_path):
+            args.load_normalization_data_pkl = norm_path
+            print(f"Option --load_normalization_data_pkl not set: Defaulting to installed data {args.load_normalization_data_pkl}")
 
     # return args, device
     return args, rank, world_size, device
