@@ -1,0 +1,35 @@
+[project]
+name = "CORDIAL" # Likely needs to be changed if you want to distribute on PyPI
+dynamic = ["version"]
+description = "Predicts small molecule - protein interaction affinities using convolutional representations of distance-dependent interactions with attention learning."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+authors = [
+    { name = "Ben Brown", email = "benjamin.p.brown@vanderbilt.edu" },
+]
+license-file = [ "LICENSE" ]
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "pytorch",
+    "sklearn",
+    "rdkit",
+    "biopython",
+]
+
+[project.urls]
+source = https://github.com/bpBrownLab/CORDIAL
+homepage = https://www.bpbrownlab.org/
+
+# Build settings ----------------------------------------------------------------------
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
