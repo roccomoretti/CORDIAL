@@ -1,6 +1,6 @@
 [project]
 name = "CORDIAL" # Likely needs to be changed if you want to distribute on PyPI
-dynamic = ["version"]
+version = "2025.0.0"
 description = "Predicts small molecule - protein interaction affinities using convolutional representations of distance-dependent interactions with attention learning."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -11,23 +11,27 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 authors = [
-    { name = "Ben Brown", email = "benjamin.p.brown@vanderbilt.edu" },
+    { name = "Benjamin P. Brown", email = "benjamin.p.brown@vanderbilt.edu" },
 ]
 license-file = [ "LICENSE" ]
 
 dependencies = [
     "numpy",
     "pandas",
+    "psutil",
     "scipy",
-    "pytorch",
-    "sklearn",
+    "torch",
+    "scikit-learn",
     "rdkit",
     "biopython",
 ]
 
+[project.scripts]
+cordial = "CORDIAL.main:main"
+
 [project.urls]
-source = https://github.com/bpBrownLab/CORDIAL
-homepage = https://www.bpbrownlab.org/
+source = "https://github.com/bpBrownLab/CORDIAL"
+homepage = "https://www.bpbrownlab.org/"
 
 # Build settings ----------------------------------------------------------------------
 [build-system]
