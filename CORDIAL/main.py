@@ -71,7 +71,7 @@ def init():
             args.inference or
             args.dry_run
     ), \
-        "Must specify at least one protocol!"
+        "Must specify either --inference or --dry_run!"
 
     # Control reproducibility
     if args.random_seed is not None:
@@ -147,6 +147,8 @@ def create_dataset(args, device, world_size=None, rank=None):
 
     if args.inference:
         inference_loader = dataset_handler.create_data_loaders(dataset=dataset, inference=True)
+    else:
+        inference_loader = None
 
     return dataset, inference_loader
 
