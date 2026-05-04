@@ -19,11 +19,11 @@ It should also be runnable without installing, if you've installed all the neede
 
 If installed with pip, the `cordial` command should be available:
 
-        cordial --inference --input_ligand_protein_pair_file pair_file.lst ....
+        cordial --inference --input_ligand_protein_pair_file pair_file.lst
 
 Altenatively, you can run the script in the root directory
 
-        /path/to/install/run_protocols.py --inference --input_ligand_protein_pair_file pair_file.lst ....
+        /path/to/install/run_protocols.py --inference --input_ligand_protein_pair_file pair_file.lst
 
 If running without pip installing, you may need to provide the `--load_model` and `--load_normalization_data_pkl` options to specify the model in the `weights/` directory and normalization file in the `resources/normalization/` directory to use.
 
