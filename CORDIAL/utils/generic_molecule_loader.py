@@ -2,8 +2,8 @@
 
 """Module for loading molecules independent of format."""
 
-from utils.molecule_loader import SDFLoader, PDBLoader
-# from utils.biomolecule_loader import PDBLoader
+from CORDIAL.utils.molecule_loader import SDFLoader, PDBLoader
+# from CORDIAL.utils.biomolecule_loader import PDBLoader
 
 def load_molecule(molecule_file):
 	if molecule_file.endswith('.sdf'):

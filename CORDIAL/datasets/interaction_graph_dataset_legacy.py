@@ -19,8 +19,8 @@ from typing import Optional
 # Project imports
 from CORDIAL.representations.interaction_graph_builder import InteractionGraphBuilder
 from CORDIAL.representations.interaction_graph_property_distance_featurizer_gpu import InteractionGraphPropertyDistanceFeaturizerGPU
-from utils.generic_molecule_loader import load_molecule
-from utils import normalization_utils
+from CORDIAL.utils.generic_molecule_loader import load_molecule
+from CORDIAL.utils import normalization_utils
 
 def _load_molecule_worker(path):
     """Helper function to load a single molecule, for multiprocessing."""
@@ -96,11 +96,11 @@ class InteractionGraphDatasetLegacy(Dataset):
         # Feature cache setup
         self.features_cache = {}
         loaded_from_cache = False
-        
+
         # Cache logic: cache_dir enables on-disk caching
         self.cache_dir = cache_dir
         self.metadata_path = os.path.join(self.cache_dir, 'metadata.pkl') if self.cache_dir else None
-        
+
         # Single-file cache implementation
         self.cache_file = os.path.join(self.cache_dir, 'features.cache') if self.cache_dir else None
         self.cache_index_path = os.path.join(self.cache_dir, 'features.index.pkl') if self.cache_dir else None
@@ -119,13 +119,13 @@ class InteractionGraphDatasetLegacy(Dataset):
                 print(f"Loading from on-disk cache: {self.cache_dir}")
                 with open(self.metadata_path, 'rb') as f:
                     metadata = pickle.load(f)
-                
+
                 with open(self.cache_index_path, 'rb') as f:
                     self.cache_index = pickle.load(f)
-                
+
                 self.valid_indices = metadata['valid_indices']
                 self.precompute_batch_size = metadata.get('precompute_batch_size', precompute_batch_size)
-                
+
                 print(f"Loaded metadata for {len(self.valid_indices)} samples from cache.")
                 loaded_from_cache = True
                 self.precompute_features = False
@@ -138,12 +138,12 @@ class InteractionGraphDatasetLegacy(Dataset):
         self.num_distance_bins = num_distance_bins
         self.transform = transform
         self.reduce_interaction_graph = reduce_interaction_graph
-        
+
         init_start_time = time.time()
-        
+
         if loaded_from_cache:
             self.precompute_features = False
-        
+
         self.precompute_batch_size = precompute_batch_size
 
         # For normalization purposes
@@ -173,14 +173,14 @@ class InteractionGraphDatasetLegacy(Dataset):
             print("Validating molecules for robust loading...")
             self.valid_indices = []
             self.skipped_indices = []
-            
+
             validation_start_time = time.time()
             for i in range(len(self.molecule_paths_1)):
                 try:
                     # Test load both molecules
                     mol1 = self._get_molecule(self.molecule_paths_1[i])
                     mol2 = self._get_molecule(self.molecule_paths_2[i])
-                    
+
                     if mol1 is not None and mol2 is not None:
                         self.valid_indices.append(i)
                     else:
@@ -189,27 +189,27 @@ class InteractionGraphDatasetLegacy(Dataset):
                             print(f"  Skipping sample {i}: Failed to load molecule 1: {self.molecule_paths_1[i]}")
                         if mol2 is None:
                             print(f"  Skipping sample {i}: Failed to load molecule 2: {self.molecule_paths_2[i]}")
-                        
+
                 except Exception as e:
                     self.skipped_indices.append(i)
                     print(f"  Skipping sample {i}: Error validating molecules: {str(e)}")
-                    
+
             validation_time = time.time() - validation_start_time
             print(f"Molecule validation completed in {validation_time:.2f}s")
             print(f"Valid samples: {len(self.valid_indices)}/{len(self.molecule_paths_1)}")
             print(f"Skipped samples: {len(self.skipped_indices)}")
-            
+
             if len(self.skipped_indices) > 0:
                 print(f"WARNING: {len(self.skipped_indices)} samples were skipped due to molecule loading issues.")
                 print("This is normal for datasets with problematic molecules. Inference will continue with valid samples.")
-        
+
         # Cached dataset initialization
         if loaded_from_cache:
             self.skipped_indices = []
             print("Dataset initialized from self-contained cache.")
-        
+
         self.batch_processing = batch_processing and self.gpu_available
-        
+
         # Feature pre-computation
         if self.precompute_features:
             if self.cache_dir is None:
@@ -253,12 +253,12 @@ class InteractionGraphDatasetLegacy(Dataset):
         """Load a list of molecules in parallel and return a dictionary."""
         num_workers = int(os.cpu_count() / 2)
         chunk_cache = {}
-        
+
         with multiprocessing.Pool(processes=num_workers) as pool:
             for i, (path, molecule) in enumerate(pool.imap_unordered(_load_molecule_worker, paths)):
                 if molecule is not None:
                     chunk_cache[path] = molecule
-        
+
         return chunk_cache
 
     def _preload_molecules(self):
@@ -367,16 +367,16 @@ class InteractionGraphDatasetLegacy(Dataset):
 
         # Completely flatten the tensor to match the saved normalization data
         flattened_samples = feature_tensor.reshape(-1, original_shape[-1] * original_shape[-2])
-        
+
         # Ensure mean and std are on the same device as feature_tensor
         device = feature_tensor.device
         mean = mean.to(device)
         std = std.to(device)
-        
+
         # Reshape mean and std to match flattened_samples shape
         mean = mean.view(1, -1)  # Shape: [1, 4096] for 64 features with 64 bins
         std = std.view(1, -1)    # Shape: [1, 4096] for 64 features with 64 bins
-        
+
         # Handle NaNs in std in-place
         std.nan_to_num_(0.0)
         std[std == 0] = 1
@@ -398,7 +398,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             raise RuntimeError("No more valid items in the dataset")
 
         true_index = self.valid_indices[index % len(self.valid_indices)]
-        
+
         feature_data = None
         # On-disk cache mode
         cache_read_start_time = time.time()
@@ -407,11 +407,11 @@ class InteractionGraphDatasetLegacy(Dataset):
                 if self.cache_file_handle is None:
                     # Open file handle if not already open (e.g., in a new worker)
                     self.cache_file_handle = open(self.cache_file, 'rb')
-                
+
                 offset, length = self.cache_index[true_index]
                 self.cache_file_handle.seek(offset)
                 data_bytes = self.cache_file_handle.read(length)
-                
+
                 buffer = io.BytesIO(data_bytes)
                 feature_data = torch.load(buffer, map_location='cpu')
 
@@ -427,27 +427,27 @@ class InteractionGraphDatasetLegacy(Dataset):
         if feature_data is not None:
             # Use pre-computed features
             feature_tensor = feature_data['features'].clone()  # Clone to avoid modifying cached version
-            
+
             # Apply normalization if needed
             if self.inference and self.load_normalization_data_pkl is not None:
                 mean, std = normalization_utils.load_mean_std(self.load_normalization_data_pkl)
                 feature_tensor = self.normalize_features(feature_tensor, mean, std)
-            
+
             # Apply transform if specified
             if self.transform:
                 feature_tensor = self.transform(feature_tensor)
-            
+
             # Ensure feature tensor is on CPU for DataLoader compatibility
             if isinstance(feature_tensor, torch.Tensor) and feature_tensor.is_cuda:
                 feature_tensor = feature_tensor.cpu()
-            
+
             sample = {"features": feature_tensor, "original_index": true_index}
-            
+
             processing_time = time.time() - processing_start_time
             total_time = time.time() - start_time
             print(f"[TIMER] __getitem__ index {index}: Total={total_time:.6f}s (CacheRead={cache_read_time:.6f}s, Processing={processing_time:.6f}s)")
             return sample
-        
+
         else:
             # Fall back to on-the-fly computation (old behavior)
             return self._compute_features_on_the_fly(index, true_index)
@@ -461,7 +461,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             # Load molecules
             ligand = self._get_molecule(self.molecule_paths_1[true_index])
             protein = self._get_molecule(self.molecule_paths_2[true_index])
-            
+
             if ligand is None or protein is None:
                 raise ValueError("One or both molecules failed to load")
 
@@ -491,12 +491,12 @@ class InteractionGraphDatasetLegacy(Dataset):
 
             if self.transform:
                 feature_tensor = self.transform(feature_tensor)
-            
+
             # Ensure feature tensor is on CPU for DataLoader compatibility
             feature_tensor = feature_tensor.cpu()
-                
+
             sample = {"features": feature_tensor, "original_index": true_index}
-            
+
             return sample
 
         except Exception as e:
@@ -514,10 +514,10 @@ class InteractionGraphDatasetLegacy(Dataset):
         """
         precompute_start_time = time.time()
         initial_valid_indices = list(range(len(self.molecule_paths_1)))
-        
+
         # Keep track of successful feature computations
         successful_indices = []
-        
+
         print(f"Processing {len(initial_valid_indices)} samples in chunks of {self.precompute_batch_size}")
 
         new_cache_index = {}
@@ -536,7 +536,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             paths1 = [self.molecule_paths_1[idx] for idx in chunk_indices]
             paths2 = [self.molecule_paths_2[idx] for idx in chunk_indices]
             unique_paths = list(set(paths1 + paths2))
-            
+
             mol_load_start = time.time()
             print(f"  Loading {len(unique_paths)} unique molecules for this chunk...")
             chunk_molecule_cache = self._load_molecules_in_parallel(unique_paths)
@@ -560,7 +560,7 @@ class InteractionGraphDatasetLegacy(Dataset):
                 except Exception as e:
                     print(f"Error accessing molecules for sample {idx}: {e}")
                     self.skipped_indices.append(idx)
-            
+
             if not molecules1_chunk:
                 print("No valid molecules in this chunk, skipping.")
                 # Explicitly clean up before the next iteration
@@ -590,7 +590,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             if self.gpu_available:
                 torch.cuda.synchronize()
             print(f"  Built interaction graphs in {time.time() - graph_build_start:.4f}s.")
-            
+
             # Reduce graph if necessary
             if self.reduce_interaction_graph:
                 reduce_start = time.time()
@@ -613,7 +613,7 @@ class InteractionGraphDatasetLegacy(Dataset):
                     interacting_atoms1_batch, interacting_atoms2_batch)):
 
                 original_index = valid_chunk_indices[j]
-                
+
                 try:
                     # Build features using chemical properties
                     temp_builder_for_features = type('TempBuilder', (), {
@@ -622,7 +622,7 @@ class InteractionGraphDatasetLegacy(Dataset):
                         'interacting_atoms1': atoms1,
                         'interacting_atoms2': atoms2
                     })()
-                    
+
                     featurizer = InteractionGraphPropertyDistanceFeaturizerGPU(
                         mol1, mol2,
                         interaction_graph_builder=temp_builder_for_features,
@@ -631,18 +631,18 @@ class InteractionGraphDatasetLegacy(Dataset):
                         property_pairs=self.property_pairs,
                         device=self.device
                     )
-                    
+
                     feature_tensor = featurizer.feature_tensor.cpu()
                     cache_dict = {'features': feature_tensor}
 
                     # Add to chunk's feature dictionary
                     chunk_features[original_index] = cache_dict
                     successful_indices.append(original_index)
-                    
+
                 except Exception as e:
                     print(f"Error computing features for sample {original_index}: {e}")
                     self.skipped_indices.append(original_index)
-            
+
             if self.gpu_available:
                 torch.cuda.synchronize()
             print(f"  Computed features for chunk in {time.time() - feature_compute_start:.4f}s.")
@@ -655,15 +655,15 @@ class InteractionGraphDatasetLegacy(Dataset):
                         buffer = io.BytesIO()
                         torch.save(cache_dict, buffer)
                         serialized_data = buffer.getvalue()
-                        
+
                         offset = cache_file_handle.tell()
                         length = len(serialized_data)
-                        
+
                         cache_file_handle.write(serialized_data)
                         new_cache_index[original_index] = (offset, length)
             else:
                 self.features_cache.update(chunk_features)
-            
+
             print(f"  Saved chunk features in {time.time() - save_chunk_start:.4f}s.")
 
             # Explicitly release memory from the completed chunk
@@ -686,7 +686,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             gc.collect()
             torch.cuda.empty_cache()
             print(f"  Chunk processing time: {time.time() - chunk_start_time:.4f}s.")
-        
+
         # Finalize and save the index
         if self.cache_dir:
             self.cache_index = new_cache_index
@@ -699,7 +699,7 @@ class InteractionGraphDatasetLegacy(Dataset):
 
         print(f"Successfully pre-computed features for {len(self.valid_indices)} samples")
         print(f"Skipped {len(self.skipped_indices)} samples due to errors")
-        
+
         # Clean up GPU memory
         torch.cuda.empty_cache()
         print(f"[TIMER] _precompute_features_gpu total time: {time.time() - precompute_start_time:.4f} seconds")
@@ -710,9 +710,9 @@ class InteractionGraphDatasetLegacy(Dataset):
         """
         precompute_start_time = time.time()
         print("Pre-computing features using CPU...")
-        
+
         successful_indices = []
-        
+
         new_cache_index = {}
         # Ensure the cache file is cleared before starting
         if self.cache_dir:
@@ -724,7 +724,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             chunk_indices = self.valid_indices[i:i + self.precompute_batch_size]
             chunk_num = i // self.precompute_batch_size
             print(f"Processing chunk {chunk_num + 1}/{(len(self.valid_indices) - 1) // self.precompute_batch_size + 1}")
-            
+
             paths1 = [self.molecule_paths_1[idx] for idx in chunk_indices]
             paths2 = [self.molecule_paths_2[idx] for idx in chunk_indices]
             unique_paths = list(set(paths1 + paths2))
@@ -733,7 +733,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             print(f"  Loading {len(unique_paths)} unique molecules for this chunk...")
             chunk_molecule_cache = self._load_molecules_in_parallel(unique_paths)
             print(f"  ...done loading molecules in {time.time() - mol_load_start:.4f}s.")
-            
+
             feature_compute_start = time.time()
             chunk_features = {}
             for idx in chunk_indices:
@@ -741,10 +741,10 @@ class InteractionGraphDatasetLegacy(Dataset):
                     # Load molecules from chunk cache
                     mol1 = chunk_molecule_cache.get(self.molecule_paths_1[idx])
                     mol2 = chunk_molecule_cache.get(self.molecule_paths_2[idx])
-                    
+
                     if mol1 is None or mol2 is None:
                         raise ValueError("Failed to load molecules from chunk cache")
-                    
+
                     # Build interaction graph
                     builder = InteractionGraphBuilder(
                         mol1, mol2,
@@ -753,7 +753,7 @@ class InteractionGraphDatasetLegacy(Dataset):
                         reduce_interaction_graph=self.reduce_interaction_graph,
                         debug=False
                     )
-                    
+
                     cache_dict = {}
                     # Pre-compute the final feature tensor
                     featurizer = InteractionGraphPropertyDistanceFeaturizerGPU(
@@ -772,7 +772,7 @@ class InteractionGraphDatasetLegacy(Dataset):
                 except Exception as e:
                     print(f"Error pre-computing features for sample {idx}: {e}")
                     self.skipped_indices.append(idx)
-            
+
             print(f"  Computed features for chunk in {time.time() - feature_compute_start:.4f}s.")
 
             # Save features for the chunk to the single file or in-memory cache
@@ -783,22 +783,22 @@ class InteractionGraphDatasetLegacy(Dataset):
                         buffer = io.BytesIO()
                         torch.save(cache_dict, buffer)
                         serialized_data = buffer.getvalue()
-                        
+
                         offset = cache_file_handle.tell()
                         length = len(serialized_data)
-                        
+
                         cache_file_handle.write(serialized_data)
                         new_cache_index[original_index] = (offset, length)
             else:
                 self.features_cache.update(chunk_features)
-            
+
             print(f"  Saved chunk features in {time.time() - save_chunk_start:.4f}s.")
 
             # Explicitly release memory from the completed chunk
             del chunk_molecule_cache
             del chunk_features
             gc.collect()
-        
+
         # Finalize and save the index
         if self.cache_dir:
             self.cache_index = new_cache_index
@@ -865,7 +865,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             # Shuffle molecule paths
             self.molecule_paths_1 = [self.molecule_paths_1[i] for i in permutation]
             self.molecule_paths_2 = [self.molecule_paths_2[i] for i in permutation]
-        
+
         # Case 2: Data loaded from cache, shuffle the valid indices
         else:
             import random
@@ -889,33 +889,33 @@ class InteractionGraphDatasetLegacy(Dataset):
         """
         return len(self.valid_indices) > 0
 
-    def create_gpu_batch_features(self, molecules1_batch, molecules2_batch, 
-                                interaction_graphs_batch, distances_batch, 
+    def create_gpu_batch_features(self, molecules1_batch, molecules2_batch,
+                                interaction_graphs_batch, distances_batch,
                                 interacting_atoms1_batch, interacting_atoms2_batch):
         """
         Create features for a batch of samples using GPU acceleration
-        
+
         Args:
             molecules1_batch, molecules2_batch: Lists of molecules
             interaction_graphs_batch: List of interaction graph tensors (on GPU)
-            distances_batch: List of distance matrices (on GPU) 
+            distances_batch: List of distance matrices (on GPU)
             interacting_atoms1_batch, interacting_atoms2_batch: Lists of interacting atom indices
-            
+
         Returns:
             Batched feature tensor
         """
         from CORDIAL.features.compute_properties import unified_compute_atomic_properties
-        
+
         batch_features = []
-        
+
         for i, (mol1, mol2, interaction_graph, distances, atoms1, atoms2) in enumerate(
-            zip(molecules1_batch, molecules2_batch, interaction_graphs_batch, 
+            zip(molecules1_batch, molecules2_batch, interaction_graphs_batch,
                 distances_batch, interacting_atoms1_batch, interacting_atoms2_batch)):
-            
+
             # Move to CPU for property computation (this is still needed)
             distances_cpu = distances.cpu()
             interaction_graph_cpu = interaction_graph.cpu()
-            
+
             # Compute properties on CPU (this part is hard to GPU-accelerate due to RDKit)
             keys = list(self.property_pairs.keys())
             mol1_properties = unified_compute_atomic_properties(
@@ -924,18 +924,18 @@ class InteractionGraphDatasetLegacy(Dataset):
             mol2_properties = unified_compute_atomic_properties(
                 mol2, [k[1] for k in keys], [mol1], self.step_size * self.num_distance_bins
             )
-            
+
             # GPU-accelerated histogram computation
             feature_tensor = self._gpu_compute_histogram_features(
                 mol1_properties, mol2_properties, distances_cpu, interaction_graph_cpu,
                 atoms1, atoms2
             )
-            
+
             batch_features.append(feature_tensor)
-        
+
         return torch.stack(batch_features)
-    
-    def _gpu_compute_histogram_features(self, mol1_properties, mol2_properties, 
+
+    def _gpu_compute_histogram_features(self, mol1_properties, mol2_properties,
                                       distances, interaction_graph, atoms1, atoms2):
         """
         GPU-accelerated histogram feature computation
@@ -944,82 +944,82 @@ class InteractionGraphDatasetLegacy(Dataset):
         binning_factors = {'unsigned': 1, 'signed': 3, 'signed_directional': 4}
         total_bins = sum(binning_factors[scheme] for scheme in self.property_pairs.values())
         feature_bins = torch.zeros(self.num_distance_bins, total_bins, device=self.device)
-        
+
         # Move data to GPU
         distances = distances.to(self.device)
         interaction_graph = interaction_graph.to(self.device)
-        
+
         # Get interaction indices
         interaction_indices = torch.nonzero(interaction_graph, as_tuple=False)
-        
+
         if len(interaction_indices) == 0:
             return feature_bins
-        
+
         # Compute distance bins
         distance_bins = torch.round(distances[interaction_indices[:, 0], interaction_indices[:, 1]] / self.step_size).long()
         valid_mask = distance_bins < self.num_distance_bins
-        
+
         interaction_indices = interaction_indices[valid_mask]
         distance_bins = distance_bins[valid_mask]
-        
+
         if len(interaction_indices) == 0:
             return feature_bins
-        
+
         # Process each property pair
         bin_offset = 0
         for (prop1_name, prop2_name), binning_scheme in self.property_pairs.items():
             # Get property values for interacting atoms
-            mol1_vals = torch.tensor([mol1_properties[prop1_name][atoms1[i]] 
+            mol1_vals = torch.tensor([mol1_properties[prop1_name][atoms1[i]]
                                     for i in interaction_indices[:, 0]], device=self.device)
-            mol2_vals = torch.tensor([mol2_properties[prop2_name][atoms2[i]] 
+            mol2_vals = torch.tensor([mol2_properties[prop2_name][atoms2[i]]
                                     for i in interaction_indices[:, 1]], device=self.device)
-            
+
             products = mol1_vals * mol2_vals
             nonzero_mask = products != 0.0
-            
+
             if not nonzero_mask.any():
                 bin_offset += binning_factors[binning_scheme]
                 continue
-            
+
             # Filter to non-zero products
             filtered_bins = distance_bins[nonzero_mask]
             filtered_products = products[nonzero_mask]
             filtered_mol1_vals = mol1_vals[nonzero_mask]
             filtered_mol2_vals = mol2_vals[nonzero_mask]
-            
+
             # Binning logic
             if binning_scheme == 'unsigned':
                 # Simple accumulation
-                feature_bins.index_add_(0, filtered_bins, 
+                feature_bins.index_add_(0, filtered_bins,
                                       filtered_products.unsqueeze(1).expand(-1, 1))
-                
+
             elif binning_scheme == 'signed':
                 products_abs = torch.abs(filtered_products)
-                
-                # Create masks for different sign combinations  
+
+                # Create masks for different sign combinations
                 neg_neg = (filtered_mol1_vals < 0) & (filtered_mol2_vals < 0)
                 pos_pos = (filtered_mol1_vals >= 0) & (filtered_mol2_vals >= 0)
                 opp_sign = (filtered_mol1_vals * filtered_mol2_vals < 0)
-                
+
                 # Accumulate into different bins
                 if neg_neg.any():
                     indices = filtered_bins[neg_neg]
                     values = products_abs[neg_neg].unsqueeze(1)
                     feature_bins[:, bin_offset:bin_offset+1].index_add_(0, indices, values)
-                
+
                 if pos_pos.any():
                     indices = filtered_bins[pos_pos]
                     values = products_abs[pos_pos].unsqueeze(1)
                     feature_bins[:, bin_offset+1:bin_offset+2].index_add_(0, indices, values)
-                
+
                 if opp_sign.any():
                     indices = filtered_bins[opp_sign]
                     values = products_abs[opp_sign].unsqueeze(1)
                     feature_bins[:, bin_offset+2:bin_offset+3].index_add_(0, indices, values)
-            
+
             # Add similar logic for signed_directional...
             bin_offset += binning_factors[binning_scheme]
-        
+
         return feature_bins
 
     # Add a custom collate function
@@ -1030,7 +1030,7 @@ class InteractionGraphDatasetLegacy(Dataset):
         """
         features = torch.stack([item['features'] for item in batch])
         original_indices = [item['original_index'] for item in batch]
-        
+
         return {
             'features': features,
             'original_index': original_indices
@@ -1042,11 +1042,11 @@ class InteractionGraphDatasetLegacy(Dataset):
         Create a DataLoader with GPU batch processing
         """
         from torch.utils.data import DataLoader
-        
+
         if self.gpu_available:
             # Use custom collate function for GPU batching
             return DataLoader(
-                self, 
+                self,
                 batch_size=batch_size,
                 shuffle=shuffle,
                 num_workers=num_workers,
@@ -1057,7 +1057,7 @@ class InteractionGraphDatasetLegacy(Dataset):
             # Fall back to default
             return DataLoader(
                 self,
-                batch_size=batch_size, 
+                batch_size=batch_size,
                 shuffle=shuffle,
                 num_workers=num_workers
             )

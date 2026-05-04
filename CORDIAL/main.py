@@ -20,8 +20,8 @@ import torch.nn as nn
 from CORDIAL.architectures.model_initializer import ModelInitializer
 from CORDIAL.datasets.dataset_handler import DatasetHandler
 from CORDIAL.processes.inference import Inference
-from utils.arg_parser_utils import MasterArgumentParser
-from utils.logger_utils import log_memory_usage
+from CORDIAL.utils.arg_parser_utils import MasterArgumentParser
+from CORDIAL.utils.logger_utils import log_memory_usage
 
 def init():
     """

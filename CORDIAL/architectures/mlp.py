@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 import torch.nn as nn
-from utils.activation_function_utils import get_activation_function
+from CORDIAL.utils.activation_function_utils import get_activation_function
 
 class MLP(nn.Module):
     """Multi-layer perceptron with configurable architecture."""
-    
+
     def __init__(self, input_size: int, hidden_sizes: list, output_size: int, layer_normalization: bool = False,
                  activation_function_names: list = None, output_activation_function_name: str = None,
                  dropout_rates: list = None, output_dropout_rate: float = 0.0, dropout_at_inference: bool = False):
